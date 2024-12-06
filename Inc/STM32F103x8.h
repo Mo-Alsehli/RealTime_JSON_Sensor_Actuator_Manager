@@ -72,6 +72,10 @@
 // TIMER 1
 #define TIM1_BASE						0x40012C00UL
 
+// ADC Base Addresses
+#define ADC1_BASE						0x40012400UL
+#define ADC2_BASE						0x40012800UL
+
 
 //---------------------------------------------------
 //Base addresses for Bus APB1 Peripherals.
@@ -205,6 +209,33 @@ typedef struct{
 	volatile uint32_t DMAR;
 }TIMx_TYPE_DEF;
 
+//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+// Peripheral register:	ADC1_2
+//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+
+typedef struct
+{
+	volatile uint32_t SR;
+	volatile uint32_t CR1;
+	volatile uint32_t CR2;
+	volatile uint32_t SMPR1;
+	volatile uint32_t SMPR2;
+	volatile uint32_t JOFR1;
+	volatile uint32_t JOFR2;
+	volatile uint32_t JOFR3;
+	volatile uint32_t JOFR4;
+	volatile uint32_t HTR;
+	volatile uint32_t LTR;
+	volatile uint32_t SQR1;
+	volatile uint32_t SQR2;
+	volatile uint32_t SQR3;
+	volatile uint32_t JSQR;
+	volatile uint32_t JDR1;
+	volatile uint32_t JDR2;
+	volatile uint32_t JDR3;
+	volatile uint32_t JDR4;
+	volatile uint32_t DR;
+}ADC_TYPE_DEF;
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 // Peripheral Instants:
@@ -236,6 +267,10 @@ typedef struct{
 #define TIM2			                ((TIMx_TYPE_DEF*) TIM2_BASE)
 #define TIM3			                ((TIMx_TYPE_DEF*) TIM3_BASE)
 #define TIM4			                ((TIMx_TYPE_DEF*) TIM4_BASE)
+
+// ADCx
+#define ADC1							 ((ADC_TYPE_DEF*)ADC1_BASE)
+#define ADC2                   			 ((ADC_TYPE_DEF*)ADC2_BASE)
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 // Clock Enable Macros:
@@ -280,6 +315,15 @@ typedef struct{
 // Clock Reset
 #define RCC_SPI1_CLK_DIS()				(RCC->APB2RSTR |= 1 << 12)
 #define RCC_SPI2_CLK_DIS()				(RCC->APB1RSTR |= 1 << 14)
+
+// ADC
+// Clock Enable:
+#define RCC_ADC1_CLK_EN()				(RCC->APB2ENR |= 1 << 9)
+#define RCC_ADC2_CLK_EN()				(RCC->APB2ENR |= 1 << 10)
+// Clock Enable:
+#define RCC_ADC1_CLK_DIS()				(RCC->APB2RSTR |= 1 << 9)
+#define RCC_ADC2_CLK_DIS()				(RCC->APB2RSTR |= 1 << 10)
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 // IVT:
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -310,6 +354,9 @@ typedef struct{
 // SPI
 #define SPI1_IRQ						35
 #define SPI2_IRQ						36
+
+// ADC
+#define ADC1_2_IRQ						18
 
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -364,6 +411,11 @@ typedef struct{
 // SPI Interrupt Mask Disable
 #define NVIC_IRQ35_SPI1_Disable			(NVIC_ICER1 |= 1 << SPI1_IRQ - 32)
 #define NVIC_IRQ36_SPI2_Disable			(NVIC_ICER1 |= 1 << SPI2_IRQ - 32)
+
+// ADC Interrupt Mask Enable
+#define NVIC_IRQ18_ADC_Enable					    (NVIC_ISER0 |= (1<<(ADC1_2_IRQ)))
+// ADC Interrupt Mask Disable
+#define NVIC_IRQ18_ADC_Disable					    (NVIC_ICER0 |= (1<<(ADC1_2_IRQ)))
 
 
 

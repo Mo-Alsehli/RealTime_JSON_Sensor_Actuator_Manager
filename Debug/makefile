@@ -15,6 +15,7 @@ RM := rm -rf
 -include MCAL/RCC/subdir.mk
 -include MCAL/GPIO/subdir.mk
 -include MCAL/EXTI/subdir.mk
+-include MCAL/ADC/subdir.mk
 -include subdir.mk
 -include objects.mk
 
@@ -42,6 +43,9 @@ default.size.stdout \
 OBJDUMP_LIST += \
 SmartEGAT_Task.list \
 
+OBJCOPY_HEX += \
+SmartEGAT_Task.hex \
+
 OBJCOPY_BIN += \
 SmartEGAT_Task.bin \
 
@@ -65,6 +69,11 @@ SmartEGAT_Task.list: $(EXECUTABLES)
 	@echo 'Finished building: $@'
 	@echo ' '
 
+SmartEGAT_Task.hex: $(EXECUTABLES)
+	arm-none-eabi-objcopy  -O ihex $(EXECUTABLES) "SmartEGAT_Task.hex"
+	@echo 'Finished building: $@'
+	@echo ' '
+
 SmartEGAT_Task.bin: $(EXECUTABLES)
 	arm-none-eabi-objcopy  -O binary $(EXECUTABLES) "SmartEGAT_Task.bin"
 	@echo 'Finished building: $@'
@@ -75,7 +84,7 @@ clean:
 	-$(RM) *
 	-@echo ' '
 
-secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_BIN)
+secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_HEX) $(OBJCOPY_BIN)
 
 .PHONY: all clean dependents
 .SECONDARY:

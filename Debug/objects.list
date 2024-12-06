@@ -1,3 +1,4 @@
+"MCAL/ADC/ADC.o"
 "MCAL/EXTI/EXTI_Driver.o"
 "MCAL/GPIO/GPIO_Driver.o"
 "MCAL/RCC/RCC.o"

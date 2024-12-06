@@ -133,14 +133,12 @@ void MCAL_UART_DeInit (UART_TYPE_DEF* uartx){
  * Note 		- none
  */
 
-void MCAL_UART_SendData	(UART_TYPE_DEF* uartx, uint16_t* pTxBuffer, uint8_t len, enum Polling_Mechanism pollingEn){
+void MCAL_UART_SendData	(UART_TYPE_DEF* uartx, uint8_t* pTxBuffer, uint8_t len, enum Polling_Mechanism pollingEn){
 
 	uint8_t *p8DataBits = (uint8_t*)pTxBuffer;
 
 	// Wait until TXE flag is set in the SR.
-	if (pollingEn == enable) {
-		while (!(uartx->SR & 1 << 7));
-	}
+
 
 	// Check the usart word length item for 9 BIT or 8 BIT in a frame.
 	uint8_t payloadLength = uartx == UART1 ? UARTGlobalCfg[0]->Payload : uartx == UART2 ? UARTGlobalCfg[1]->Payload : UARTGlobalCfg[2]->Payload;
@@ -155,7 +153,9 @@ void MCAL_UART_SendData	(UART_TYPE_DEF* uartx, uint16_t* pTxBuffer, uint8_t len,
 			if (parity != UART_Parity_NONE) {
 				// Implement parity bit calculation logic here based on parity configuration
 			}
-
+			if (pollingEn == enable) {
+					while (!(uartx->SR & 1 << 7));
+			}
 			uartx->DR = data;
 			p8DataBits++;
 		}

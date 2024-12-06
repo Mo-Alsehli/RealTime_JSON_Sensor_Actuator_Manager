@@ -3,101 +3,77 @@
  * Author: Mohamed Magdi
  */
 
-#ifndef INC_STM32F103C6_ADC_H_
-#define INC_STM32F103C6_ADC_H_
+#include "ADC.h"
 
-//-----------------------------
-//Includes
-//-----------------------------
-#include <STM32F103x8.h>
-
-#include "GPIO_Driver.h"
-
-
-//-----------------------------
-//User type definitions (structures)
-//-----------------------------
-
-typedef struct
-{
-	uint16_t Channel_num								 ;    //specified through ADC_Channels enum
-	uint16_t channel_Sampling_rate						 ;	 //Specify Sampling rate of the channel through ADC_SR enum
-	void(* Channel_IRQ_callback)(uint16_t channel_data)  ;   //the address callback function of the channel
-}Channels;
-
-typedef struct
-{
-	uint16_t Number_of_channels  ; //specify the number of channels of ADC
-
-	Channels channels[10]  		 ; //specify the number of channels to read
-
-	uint16_t Continous_Mode	     ; //specify the Adc CONT mode
-							      //this parameter can be a value of @ref ADC_CONT_Mode
-
-	uint16_t Interrupt			 ; //Enable or disable interrupt
-								  //this parameter can be a value of @ref ADC_Interrupt_Mode
-
-	uint16_t Data_Alignment      ; //specify data alignment mode
-								  //this parameter can be a value of @ref ADC_Align_Mode
-
-}ADC_Config_t;
-
-//-----------------------------
-//Macros Configuration References
-//-----------------------------
-
-
-//@ref ADC_CONT_Mode
-#define ADC_CONT_disabled    	0
-#define ADC_CONT_enabled     	(uint32_t)(0x2)
-
-
-//@ref ADC_Interrupt_Mode
-#define ADC_Interrupt_disable  	0
-#define ADC_Interrupt_enable  	(uint32_t)(1<<5)
-
-//@ref ADC_Align_Mode
-#define ADC_Right_alignment 	0
-#define ADC_Left_alignment  	(uint32_t)(1<<11)
-
-//ADC Channels numbers
-typedef enum
-{
-	Ch_A0=1 , Ch_A1 , Ch_A2 , Ch_A3 ,Ch_A4 , Ch_A5 , Ch_A6 , Ch_A7 , Ch_B0 , Ch_B1
-}ADC_channels;
-
-
-//ADC sampling rate
-typedef enum
-{
-	SR_1_cycle , SR_7_cycles , SR_13_cycles , SR_28_cycles ,SR_41_cycles, SR_55_cycles , SR_71_cycles , SR_239_cycles
-}ADC_SR;
-
-
-//ADC Idle mode
-typedef enum
-{
-	ADC_full_close,
-	ADC_Less_power
-}ADC_Idle;
-
-//ADC Channels sequence
-typedef enum
-{
-	Rank0 , Rank1 , Rank2 , Rank3 ,Rank4 , Rank5 , Rank6 , Rank7 , Rank8 , Rank9
-}ADC_Ch_Sequence;
+// Global Variables.
+void (*G_ADC_Callback)(void);
 
 /*
-* ===============================================
-* APIs Supported by "MCAL SPI DRIVER"
-* ===============================================
-*/
-void MCAL_ADC_init(ADC_TypeDef* ADCx , ADC_Config_t* ADC_Config);
-void MCAL_ADC_Deinit(ADC_TypeDef* ADCx , ADC_Idle Idle_mode);
-void MCAL_ADC_pins_set(ADC_TypeDef* ADCx , ADC_Config_t* ADC_Config);
-void MCAL_ADC_READ(ADC_TypeDef* ADCx , ADC_Config_t* ADC_Config ,uint16_t *data);
+ * Function Description: This function is used to initialize ADC1
+ * 						 With two channels 0 and 1.
+ *
+ */
+void ADC_Init(ADC_Config_t* ADCCfg){
+	// Enable Clocks for ADC and GPIO.
+	RCC_GPIOA_CLk_EN();
+	RCC_ADC1_CLK_EN();
 
+	// Configure GPIO Pins PA0 and PA1 for analog Input.
+	// Reset the first 8-bits in the CRL Register.
+	GPIOA->CRL &= ~((0xF << (0 * 4)) | (0xF << (1 * 4)));
 
+	/******** ADC Configuration ***********/
+	// Enable ADC.
+	ADC1->CR2 |= (1 << 0);
 
-#endif /* INC_STM32F103C6_ADC_H_ */
+	// Input Channels.
+	ADC1->SQR3 = ADCCfg->channels;
 
+	// ADC Mode.
+	ADC1->CR1 |= ADCCfg->mode;
+
+	G_ADC_Callback = ADCCfg->P_IRQ_Callback;
+
+	// ADC Converstion Mode (CONT - Single).
+	if(ADCCfg->convMode == ADC_Conv_CONT_MODE){
+		ADC1->CR2 |= (1 << 1);
+	}else if(ADCCfg->convMode == ADC_Conv_Single_MODE){
+		ADC1->CR2 &= ~(1 << 1);
+	}else{}
+
+	// Data Alignment
+	if(ADCCfg->dataAlginement == ADC_DataAlign_Right){
+		ADC1->CR2 &= ~(1 << 11);
+	}else if(ADCCfg->dataAlginement == ADC_DataAlign_Left){
+		ADC1->CR2 |= (1 << 11);
+	}else{}
+
+	// ADC Converstion Complete Interrupt Enable (EOCIE).
+	if(ADCCfg->IRQ_Enable == ADC_IRQ_Enable){
+		NVIC_IRQ18_ADC_Enable;
+		ADC1->CR1 |= (1 << 5);
+	}else if(ADCCfg->IRQ_Enable == ADC_IRQ_Disable){
+		ADC1->CR1 &= ~(1 << 5);
+	}
+
+	// Start Conversion.
+	// Small Delay(tSTAB).
+	for(int i = 0; i <= 1000; i++);
+	// Set ADON again to start conversion.
+	ADC1->CR2 |= (1 << 0);
+	// Set SWSTART Bit to start trigger by SW (best for operation).
+	ADC1->CR2 |= (0b111 << 17);
+}
+
+void ADC_DeInit(){
+	RCC_ADC1_CLK_DIS();
+	NVIC_IRQ18_ADC_Disable;
+	ADC1->CR2 &= (1 << 0);
+}
+
+void ADC1_2_IRQHandler(){
+	if(G_ADC_Callback){
+		G_ADC_Callback();
+	}
+	ADC1->SR &= ~(1 << 1);
+}

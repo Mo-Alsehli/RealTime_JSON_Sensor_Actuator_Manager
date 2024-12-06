@@ -1,0 +1,5 @@
+MCAL/ADC/ADC.o: ../MCAL/ADC/ADC.c ../MCAL/ADC/ADC.h ../Inc/STM32F103x8.h
+
+../MCAL/ADC/ADC.h:
+
+../Inc/STM32F103x8.h:

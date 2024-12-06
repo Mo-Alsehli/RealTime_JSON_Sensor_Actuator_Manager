@@ -13,56 +13,71 @@ void (*G_ADC_Callback)(void);
  * 						 With two channels 0 and 1.
  *
  */
-void ADC_Init(ADC_Config_t* ADCCfg){
-	// Enable Clocks for ADC and GPIO.
-	RCC_GPIOA_CLk_EN();
-	RCC_ADC1_CLK_EN();
+void ADC_Init(ADC_Config_t* ADCCfg) {
+    // Enable clocks for ADC and GPIO
+    RCC_GPIOA_CLk_EN();
+    RCC_ADC1_CLK_EN();
 
-	// Configure GPIO Pins PA0 and PA1 for analog Input.
-	// Reset the first 8-bits in the CRL Register.
-	GPIOA->CRL &= ~((0xF << (0 * 4)) | (0xF << (1 * 4)));
+    // Configure GPIO Pins PA0 and PA1 for analog input (reset to analog mode)
+    GPIOA->CRL &= ~((0xF << (0 * 4)) | (0xF << (1 * 4)));
 
-	/******** ADC Configuration ***********/
-	// Enable ADC.
-	ADC1->CR2 |= (1 << 0);
+    // Enable ADC by setting ADON bit
+    ADC1->CR2 |= (1 << 0);
 
-	// Input Channels.
-	ADC1->SQR3 = ADCCfg->channels;
+    // Configure ADC channels (set the sequence in SQR3)
+    ADC1->SQR3 = ADCCfg->channels;
 
-	// ADC Mode.
-	ADC1->CR1 |= ADCCfg->mode;
+    // Set continuous or single conversion mode
+    if (ADCCfg->convMode == ADC_Conv_CONT_MODE) {
+        ADC1->CR2 |= (1 << 1); // Enable continuous mode
+    } else if (ADCCfg->convMode == ADC_Conv_Single_MODE) {
+        ADC1->CR2 &= ~(1 << 1); // Disable continuous mode (single conversion)
+    }
 
-	G_ADC_Callback = ADCCfg->P_IRQ_Callback;
+    // Configure data alignment (right or left)
+    if (ADCCfg->dataAlginement == ADC_DataAlign_Right) {
+        ADC1->CR2 &= ~(1 << 11); // Right alignment
+    } else if (ADCCfg->dataAlginement == ADC_DataAlign_Left) {
+        ADC1->CR2 |= (1 << 11); // Left alignment
+    }
 
-	// ADC Converstion Mode (CONT - Single).
-	if(ADCCfg->convMode == ADC_Conv_CONT_MODE){
-		ADC1->CR2 |= (1 << 1);
-	}else if(ADCCfg->convMode == ADC_Conv_Single_MODE){
-		ADC1->CR2 &= ~(1 << 1);
-	}else{}
+    // Enable or disable End of Conversion (EOC) interrupt
+    if (ADCCfg->IRQ_Enable == ADC_IRQ_Enable) {
+        NVIC_IRQ18_ADC_Enable; // Enable ADC interrupt in NVIC
+        ADC1->CR1 |= (1 << 5); // Enable EOC interrupt
+    } else if (ADCCfg->IRQ_Enable == ADC_IRQ_Disable) {
+        ADC1->CR1 &= ~(1 << 5); // Disable EOC interrupt
+    }
 
-	// Data Alignment
-	if(ADCCfg->dataAlginement == ADC_DataAlign_Right){
-		ADC1->CR2 &= ~(1 << 11);
-	}else if(ADCCfg->dataAlginement == ADC_DataAlign_Left){
-		ADC1->CR2 |= (1 << 11);
-	}else{}
+    // Set ADC callback if interrupt mode is enabled
+    G_ADC_Callback = ADCCfg->P_IRQ_Callback;
 
-	// ADC Converstion Complete Interrupt Enable (EOCIE).
-	if(ADCCfg->IRQ_Enable == ADC_IRQ_Enable){
-		NVIC_IRQ18_ADC_Enable;
-		ADC1->CR1 |= (1 << 5);
-	}else if(ADCCfg->IRQ_Enable == ADC_IRQ_Disable){
-		ADC1->CR1 &= ~(1 << 5);
-	}
+    // Wait for ADC stabilization (tSTAB)
+    for (int i = 0; i <= 1000; i++);
 
-	// Start Conversion.
-	// Small Delay(tSTAB).
-	for(int i = 0; i <= 1000; i++);
-	// Set ADON again to start conversion.
-	ADC1->CR2 |= (1 << 0);
-	// Set SWSTART Bit to start trigger by SW (best for operation).
-	ADC1->CR2 |= (0b111 << 17);
+    // Set ADON again to start the ADC
+    ADC1->CR2 |= (1 << 0);
+}
+
+
+uint16_t ADC_Read(uint8_t channel) {
+    // Select the ADC channel
+    ADC1->SQR3 = channel;
+
+    // Start the conversion
+    ADC1->CR2 |= ADC_CR2_SWSTART;
+
+    // Wait for the End of Conversion (EOC) flag
+    while (!(ADC1->SR & ADC_SR_EOC));
+
+    // Read the ADC value
+    uint16_t adcValue = ADC1->DR;
+
+    // Clear the EOC flag (optional, reading ADC1->DR usually clears it)
+    ADC1->SR &= ~ADC_SR_EOC;
+    ADC1->SR &= ~(1 << 4);
+
+    return adcValue;
 }
 
 void ADC_DeInit(){

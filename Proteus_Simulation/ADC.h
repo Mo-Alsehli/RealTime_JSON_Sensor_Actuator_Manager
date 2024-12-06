@@ -33,7 +33,6 @@ typedef struct {
 /*
  * @ref ADC_define_SequenceChannels
  */
-#define ADC_1_SequenceChannels			((0 << 0))
 #define ADC_1_2_SequenceChannels		((0 << 0) | 1 << 5)
 
 /*
@@ -60,12 +59,9 @@ typedef struct {
 #define ADC_IRQ_Enable					1
 #define ADC_IRQ_Disable					0
 
-#define ADC_SR_EOC						(1 << 1)
-#define ADC_CR2_SWSTART					(1 << 22)
-
 // APIs
 void ADC_Init(ADC_Config_t* ADCCfg);
 void ADC_DeInit();
-uint16_t ADC_Read(uint8_t channel);
+uint8_t ADC_Start_Reading();
 
 #endif /* ADC_ADC_H_ */

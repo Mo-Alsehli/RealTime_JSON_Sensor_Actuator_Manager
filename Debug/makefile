@@ -16,6 +16,7 @@ RM := rm -rf
 -include MCAL/GPIO/subdir.mk
 -include MCAL/EXTI/subdir.mk
 -include MCAL/ADC/subdir.mk
+-include HAL/LCD/subdir.mk
 -include subdir.mk
 -include objects.mk
 
@@ -35,7 +36,7 @@ endif
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-SmartEGAT_Task.elf \
+SmartEGAT_Task.axf \
 
 SIZE_OUTPUT += \
 default.size.stdout \
@@ -51,11 +52,11 @@ SmartEGAT_Task.bin \
 
 
 # All Target
-all: SmartEGAT_Task.elf secondary-outputs
+all: SmartEGAT_Task.axf secondary-outputs
 
 # Tool invocations
-SmartEGAT_Task.elf: $(OBJS) $(USER_OBJS) C:\Users\dell\STM32CubeIDE\workspace_1.4.0\SmartEGAT_Task\STM32F103C8TX_FLASH.ld
-	arm-none-eabi-gcc -o "SmartEGAT_Task.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\dell\STM32CubeIDE\workspace_1.4.0\SmartEGAT_Task\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="SmartEGAT_Task.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+SmartEGAT_Task.axf: $(OBJS) $(USER_OBJS) C:\Users\dell\STM32CubeIDE\workspace_1.4.0\SmartEGAT_Task\STM32F103C8TX_FLASH.ld
+	arm-none-eabi-gcc -o "SmartEGAT_Task.axf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\dell\STM32CubeIDE\workspace_1.4.0\SmartEGAT_Task\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="SmartEGAT_Task.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

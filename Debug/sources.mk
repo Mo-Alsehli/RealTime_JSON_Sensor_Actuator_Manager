@@ -20,6 +20,7 @@ OBJCOPY_BIN :=
 
 # Every subdirectory with source files must be described here
 SUBDIRS := \
+HAL/LCD \
 MCAL/ADC \
 MCAL/EXTI \
 MCAL/GPIO \

@@ -120,35 +120,40 @@ int main(void) {
     // ADC Configuration
     ADC_Config_t ADCCfg = {
         .mode = 0,                          // No scan mode
-        .channels = ADC_1_SequenceChannels, // Channel 0
-        .convMode = ADC_Conv_CONT_MODE,   // Single conversion mode
+        .channels = 0,
+        .convMode = ADC_Conv_Single_MODE,   // Single conversion mode
         .conversions = ADC_NumOfConvs_1,
         .dataAlginement = ADC_DataAlign_Right,
         .IRQ_Enable = ADC_IRQ_Disable,      // Interrupts disabled
         .P_IRQ_Callback = NULL
     };
-    ADC_Init(&ADCCfg);
+    ADC_Init(ADC1, &ADCCfg);
 
-    char buffer[50];
-    uint16_t adcValue = 0;
-    float temperature = 0;
+    char buffer[100];
+    uint16_t adcValue1 = 0;
+    uint16_t adcValue2 = 0;
+    float temperature1 = 0;
+    float temperature2 = 0;
 
     while (1) {
         // Read ADC value from channel 0
-        adcValue = ADC_Read(0);
+    	adcValue2 = ADC_Read_SingleChannel(ADC1, 1);
+    	adcValue1 = ADC_Read_SingleChannel(ADC1, 0);
 
         // Convert ADC value to temperature
-        float voltage = (adcValue * 3.3) / 4096.0; // Assuming a 12-bit ADC and 3.3V reference
-        temperature = voltage * 100.0;            // For an LM35 sensor
+        float voltage1 = (adcValue1 * 3.3) / 4096.0; // Assuming a 12-bit ADC and 3.3V reference
+        temperature1 = voltage1 * 100.0;            // For an LM35 sensor
+        float voltage2 = (adcValue2 * 3.3) / 4096.0; // Assuming a 12-bit ADC and 3.3V reference
+        temperature2 = voltage2 * 100.0;            // For an LM35 sensor
         //int var = 0;
         // Print the temperature to UART
-        sprintf(buffer, "Temp: %.2f C\r\n", temperature);
+        sprintf(buffer, "Temp1: %.2f C | Temp2: %.2f C\r\n", temperature1, temperature2);
         MCAL_UART_SendData(UART1, (uint8_t*)buffer, strlen(buffer), enable);
         //sendChar('M');
         //sendStr((uint8_t*)buffer);
         // Add a delay
         //delay(1000, U_ms, clk);
-        wait(500);
+        wait(300);
         //displayClear();
     }
 }

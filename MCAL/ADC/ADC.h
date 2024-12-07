@@ -9,7 +9,7 @@
 #include "STM32F103x8.h"
 
 typedef struct {
-	uint8_t mode; 					// This parameter must be set based on @ref ADC_define_MODE.
+	uint32_t mode; 					// This parameter must be set based on @ref ADC_define_MODE.
 	uint8_t channels; 			 	// Sets the ADC channels in the SQR1,2,3
 									// this parameter must be set based on @ref ADC_define_SequenceChannels.
 	uint8_t conversions; 			// This parameter must be set based on @ref ADC_NumOfConvs_define.
@@ -28,7 +28,7 @@ typedef struct {
 /*
  * @ref ADC_define_MODE
  */
-#define ADC_SCAN_MODE					((uint32_t)(1 << 8))
+#define ADC_SCAN_MODE					(1 << 8)
 
 /*
  * @ref ADC_define_SequenceChannels
@@ -64,8 +64,8 @@ typedef struct {
 #define ADC_CR2_SWSTART					(1 << 22)
 
 // APIs
-void ADC_Init(ADC_Config_t* ADCCfg);
-void ADC_DeInit();
-uint16_t ADC_Read(uint8_t channel);
+void ADC_Init(ADC_TYPE_DEF* ADC , ADC_Config_t* ADCCfg);
+void ADC_DeInit(ADC_TYPE_DEF* ADC);
+uint16_t ADC_Read_SingleChannel(ADC_TYPE_DEF* ADC, uint16_t channel);
 
 #endif /* ADC_ADC_H_ */

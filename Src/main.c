@@ -24,6 +24,8 @@
 #include "LCD.h"
 #include "LM35_Temp_Sensor.h"
 #include "LDR_Light_Sensor.h"
+#include "Relay_5V_Actuator.h"
+
 
 
 // ------------------------------------------------------------------
@@ -108,19 +110,28 @@ int main(void) {
     MCAL_UART_Init(UART1, &uartCfg);
     MCAL_UART_GPIO_SetPins(UART1);
 
+    GPIO_PinConfig_t gpioCfg;
+    gpioCfg.GPIO_MODE = GPIO_MODE_OUTPUT_PP;
+    gpioCfg.GPIO_OUTPUT_SPEED = GPIO_SPEED_2M;
+    gpioCfg.GPIO_PinNumber = GPIO_PIN_11;
+    MCAL_GPIO_Init(GPIOA, &gpioCfg);
 
-    // Initialize LM35 with ADC1 ch0
+
+    // Initialize LM35 with ADC1 ch0.
     HAL_LM35_Init();
 
-    // Initialize LDR with ADC1 ch1
+    // Initialize LDR with ADC1 ch1.
     HAL_LDR_Init();
 
+    // Initialize Relay Actuator.
+    HAL_Relay_Init(GPIOA, GPIO_PIN_11);
     while (1) {
-    	//HAL_LM35_UART_SendDAta();
-        wait(100);
+    	HAL_LM35_UART_SendDAta();
+
         HAL_LDR_UART_SendData();
-        wait(200);
     	//delay(500, U_ms, clk);
+        HAL_Control_Relay_Light();
+        wait(500);
     }
 }
 

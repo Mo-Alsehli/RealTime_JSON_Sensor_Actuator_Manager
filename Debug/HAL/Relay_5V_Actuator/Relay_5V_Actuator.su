@@ -1,0 +1,3 @@
+Relay_5V_Actuator.c:10:6:HAL_Relay_Init	24	static
+Relay_5V_Actuator.c:19:6:HAL_Control_Relay_Light	16	static
+Relay_5V_Actuator.c:32:6:HAL_Control_Relay_Temperature	16	static

@@ -13,7 +13,7 @@ void (*G_ADC_Callback)(void);
  * 						 With two channels 0 and 1.
  *
  */
-void ADC_Init(ADC_TYPE_DEF* ADC , ADC_Config_t* ADCCfg) {
+void ADC_Init(ADC_TYPE_DEF* ADC , ADC_Config_t* ADCCfg, uint16_t GPIO_PIN_NUM) {
     // Enable clocks for ADC and GPIO
     RCC_GPIOA_CLk_EN();
     if(ADC == ADC1){
@@ -21,6 +21,13 @@ void ADC_Init(ADC_TYPE_DEF* ADC , ADC_Config_t* ADCCfg) {
     }else if(ADC == ADC2){
     	RCC_ADC2_CLK_EN();
     }
+
+    GPIO_PinConfig_t gpioCfg;
+    gpioCfg.GPIO_MODE = GPIO_MODE_ANALOG;
+    gpioCfg.GPIO_PinNumber = GPIO_PIN_NUM;
+
+    // Channel Pin Analog Mode Initilization.
+    MCAL_GPIO_Init(GPIOA, &gpioCfg);
 
     // Configure GPIO Pins PA0 and PA1 for analog input (reset to analog mode)
     GPIOA->CRL &= ~((0xF << (0 * 4)) | (0xF << (1 * 4)));
@@ -89,6 +96,12 @@ void ADC_DeInit(ADC_TYPE_DEF* ADC){
 	}
 	NVIC_IRQ18_ADC_Disable;
 	ADC->CR2 &= (1 << 0);
+
+	 ADC->SR = 0;                   // Clear status register
+	 ADC->CR1 = 0;                  // Clear control register 1
+	 ADC->CR2 = 0;                  // Clear control register 2
+
+
 }
 
 void ADC1_2_IRQHandler(){

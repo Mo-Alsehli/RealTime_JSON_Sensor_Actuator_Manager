@@ -18,11 +18,13 @@
 
 #include "GPIO_Driver.h"
 #include "EXTI_Driver.h"
-#include "TIM.h"
 #include "UART.h"
 #include "RCC.h"
 #include "ADC.h"
 #include "LCD.h"
+#include "LM35_Temp_Sensor.h"
+#include "LDR_Light_Sensor.h"
+
 
 // ------------------------------------------------------------------
 // User Defined Macros
@@ -35,28 +37,18 @@
 // Global Variables
 // ------------------------------------------------------------------
 
-int gVar = 20;
-volatile uint16_t sensorValues[2]; // sensorValues[0]-> Tempreture Sensor.
-								   // sensorValues[1]-> Light Sensor.
-volatile uint8_t currentChannel = 0;
-
-volatile char data[100];
-
-float tempreture;
-
 // ------------------------------------------------------------------
 // Global functions
 // ------------------------------------------------------------------
 
-
+/*
+float temperature;
 void ADC_Callback(){
-//	sensorValues[currentChannel] = ADC1->DR;
-//	currentChannel = (currentChannel + 1) % 2;
-//	gVar += 20;
-	sensorValues[0] = ADC1->DR;
-	float voltage = (sensorValues[0] * 5.0) / 4096.0;
-	tempreture = (voltage - 5.0) * 100.0;
+	uint16_t adcValue = ADC1->DR;
+	float voltage = (adcValue * 5.0) / 4096.0;
+	temperature = (voltage - 5.0) * 100.0;
 }
+*/
 
 void clockInit(){
 	RCC_GPIOA_CLk_EN();
@@ -100,7 +92,6 @@ int main(void) {
     // Clock Initialization
     clockInit();
     //GPIOAInit();
-
     //LCDInit();
 
     // UART Configuration
@@ -117,44 +108,19 @@ int main(void) {
     MCAL_UART_Init(UART1, &uartCfg);
     MCAL_UART_GPIO_SetPins(UART1);
 
-    // ADC Configuration
-    ADC_Config_t ADCCfg = {
-        .mode = 0,                          // No scan mode
-        .channels = 0,
-        .convMode = ADC_Conv_Single_MODE,   // Single conversion mode
-        .conversions = ADC_NumOfConvs_1,
-        .dataAlginement = ADC_DataAlign_Right,
-        .IRQ_Enable = ADC_IRQ_Disable,      // Interrupts disabled
-        .P_IRQ_Callback = NULL
-    };
-    ADC_Init(ADC1, &ADCCfg);
 
-    char buffer[100];
-    uint16_t adcValue1 = 0;
-    uint16_t adcValue2 = 0;
-    float temperature1 = 0;
-    float temperature2 = 0;
+    // Initialize LM35 with ADC1 ch0
+    HAL_LM35_Init();
+
+    // Initialize LDR with ADC1 ch1
+    HAL_LDR_Init();
 
     while (1) {
-        // Read ADC value from channel 0
-    	adcValue2 = ADC_Read_SingleChannel(ADC1, 1);
-    	adcValue1 = ADC_Read_SingleChannel(ADC1, 0);
-
-        // Convert ADC value to temperature
-        float voltage1 = (adcValue1 * 3.3) / 4096.0; // Assuming a 12-bit ADC and 3.3V reference
-        temperature1 = voltage1 * 100.0;            // For an LM35 sensor
-        float voltage2 = (adcValue2 * 3.3) / 4096.0; // Assuming a 12-bit ADC and 3.3V reference
-        temperature2 = voltage2 * 100.0;            // For an LM35 sensor
-        //int var = 0;
-        // Print the temperature to UART
-        sprintf(buffer, "Temp1: %.2f C | Temp2: %.2f C\r\n", temperature1, temperature2);
-        MCAL_UART_SendData(UART1, (uint8_t*)buffer, strlen(buffer), enable);
-        //sendChar('M');
-        //sendStr((uint8_t*)buffer);
-        // Add a delay
-        //delay(1000, U_ms, clk);
-        wait(300);
-        //displayClear();
+    	//HAL_LM35_UART_SendDAta();
+        wait(100);
+        HAL_LDR_UART_SendData();
+        wait(200);
+    	//delay(500, U_ms, clk);
     }
 }
 

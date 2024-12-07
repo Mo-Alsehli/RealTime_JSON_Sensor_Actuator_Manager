@@ -16,6 +16,8 @@ RM := rm -rf
 -include MCAL/GPIO/subdir.mk
 -include MCAL/EXTI/subdir.mk
 -include MCAL/ADC/subdir.mk
+-include HAL/LM35_Temp_Sensor/subdir.mk
+-include HAL/LDR_Light_Sensor/subdir.mk
 -include HAL/LCD/subdir.mk
 -include subdir.mk
 -include objects.mk

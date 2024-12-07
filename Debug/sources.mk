@@ -21,6 +21,8 @@ OBJCOPY_BIN :=
 # Every subdirectory with source files must be described here
 SUBDIRS := \
 HAL/LCD \
+HAL/LDR_Light_Sensor \
+HAL/LM35_Temp_Sensor \
 MCAL/ADC \
 MCAL/EXTI \
 MCAL/GPIO \

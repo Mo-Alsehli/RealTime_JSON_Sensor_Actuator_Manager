@@ -39,87 +39,38 @@ static uint32_t counts_time(uint32_t* timx, uint32_t clk){
 
 
 
-void delay(uint16_t time, uint8_t unit, uint32_t clk){
-	delayFlag = 1;
-	// disable NVIC Interrupt
-	//NVIC_IRQ28_TIM2_Disable;
-	// Enable Clock For Selected Timer
-	RCC_TIM2_CLk_EN();
+void delay(uint16_t time, uint8_t unit, uint32_t clk) {
+    delayFlag = 1;
 
-	// Timer off (be sure that is configured from the off state (Optional))
-	TIM2->CR1 &= ~(1 << 0);
+    // Enable Clock for Timer 2
+    RCC_TIM2_CLk_EN();
 
-	uint8_t  userFlag = 1;
-	uint32_t userTop  = 0;
-	uint32_t userPre  = 1;
-	uint32_t timeUnit = 1000;
-	uint8_t  increase = 2;
+    // Disable Timer 2
+    TIM2->CR1 &= ~(1 << CEN);
 
-	if(unit == 0){
-		timeUnit = 1000;
-		if(time > 3000){
-			increase = 100;
-		}else{
-			increase = 10;
-		}
-	}else {
-		timeUnit = 1000000;
-		if(time > 3000){
-			increase = 10;
-		}else {
-			increase = 5;
-		}
-	}
+    // Calculate Prescaler and ARR
+    uint32_t timerFrequency = clk / (unit == 0 ? 1000 : 1000000); // Frequency in Hz or MHz
+    uint32_t ticks = timerFrequency * time;
 
-	while(userFlag == 1){
+    TIM2->PSC = (ticks / 65536) - 1; // Set prescaler
+    TIM2->ARR = (ticks / (TIM2->PSC + 1)) - 1; // Set auto-reload register
 
-		userTop = (clk/timeUnit*time)/(userPre);
-		//7272 = (8000000/1000*time)/10;
-		//7272 = (8000 * time)/10;
-		//72720 / 8000 =
+    // Ensure values are within valid range
+    if (TIM2->ARR > 0xFFFF) TIM2->ARR = 0xFFFF;
+    if (TIM2->PSC > 0xFFFF) TIM2->PSC = 0xFFFF;
 
-		if(userTop >= 32000){
-			if(userPre > 65530){
-				userPre = 65530;
-				userFlag = 0;
-			}else {
-				userPre += increase;
-			}
-		}else {
-			userFlag = 0;
-		}
-	}
+    // Enable update event and interrupt
+    TIM2->DIER |= (1 << UIE);
+    TIM2->EGR |= (1 << 0); // Reinitialize counter
+    TIM2->CR1 |= (1 << URS); // Update request source: only overflow/underflow
+    TIM2->CR1 |= (1 << CEN); // Enable Timer
 
-	// Timer Off
-	TIM2->CR1 &= ~(1<<CEN);
-	/*URS:
-	 * Update request source
-	 * This bit is set and cleared by software to select the UEV event sources.
-	 * 0: Any of the following events generate an update interrupt or DMA request if enabled.
-	 * These events can be:
-	 * Counter overflow/underflow
-	 */
-	// Only counter overflow/underflow generates an update
-	TIM2->CR1 |= (1 << URS);
-	/*
-	 * Bit 0  UIE: Update interrupt enable
-	 *0: Update interrupt disabled.
-	 *1: Update interrupt enabled.
-	 */
-	// update interrupt enabled
-	TIM2->DIER |= (1 << UIE);
+    NVIC_IRQ28_TIM2_Enable;
 
-	TIM2->ARR = userTop;
-	TIM2->PSC = (userPre - 1);
-	// Re-Initialize the counter and generates an update of the registers.
-	TIM2->EGR |= (1 << 0);
-	// Enable Timer
-	TIM2->CR1 |= (1 << CEN);
-
-	NVIC_IRQ28_TIM2_Enable; 
-
-	while(delayFlag);
+    // Wait for delayFlag to be cleared in ISR
+    while (delayFlag);
 }
+
 
 // This function is used with TIM3 and TIM4
 uint32_t timeCalc(TIMx_TYPE_DEF* timx, uint32_t clk, uint8_t timerState){
@@ -204,12 +155,13 @@ uint64_t TIM1CalcMicros(uint32_t clk){
 // Timer ISR() Handler
 
 // IRQ for delay Function with Timer2
-void TIM2_IRQHandler(){
-	TIM2->SR &= ~(1 << 0); // Update Interrupt Flag
-	delayFlag = 0;
-
-	TIM2->CR1 &= ~(1<<CEN);
+void TIM2_IRQHandler(void) {
+    if (TIM2->SR & (1 << 0)) { // Check update interrupt flag
+        TIM2->SR &= ~(1 << 0); // Clear interrupt flag
+        delayFlag = 0;           // Signal delay completion
+    }
 }
+
 
 
 void TIM1_UP_IRQHandler() {

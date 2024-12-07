@@ -1,4 +1,4 @@
-ADC.c:16:6:ADC_Init	24	static
-ADC.c:67:10:ADC_Read_SingleChannel	24	static
-ADC.c:84:6:ADC_DeInit	16	static
-ADC.c:94:6:ADC1_2_IRQHandler	8	static
+ADC.c:16:6:ADC_Init	32	static
+ADC.c:74:10:ADC_Read_SingleChannel	24	static
+ADC.c:91:6:ADC_DeInit	16	static
+ADC.c:107:6:ADC1_2_IRQHandler	8	static

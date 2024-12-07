@@ -7,6 +7,7 @@
 #define ADC_ADC_H_
 
 #include "STM32F103x8.h"
+#include "GPIO_Driver.h"
 
 typedef struct {
 	uint32_t mode; 					// This parameter must be set based on @ref ADC_define_MODE.
@@ -64,7 +65,7 @@ typedef struct {
 #define ADC_CR2_SWSTART					(1 << 22)
 
 // APIs
-void ADC_Init(ADC_TYPE_DEF* ADC , ADC_Config_t* ADCCfg);
+void ADC_Init(ADC_TYPE_DEF* ADC , ADC_Config_t* ADCCfg, uint16_t GPIO_PIN_NUM);
 void ADC_DeInit(ADC_TYPE_DEF* ADC);
 uint16_t ADC_Read_SingleChannel(ADC_TYPE_DEF* ADC, uint16_t channel);
 

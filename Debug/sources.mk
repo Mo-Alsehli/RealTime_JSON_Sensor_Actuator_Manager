@@ -24,6 +24,8 @@ HAL/LCD \
 HAL/LDR_Light_Sensor \
 HAL/LM35_Temp_Sensor \
 HAL/Relay_5V_Actuator \
+Libs/cJson \
+Libs/cJson_Functions \
 MCAL/ADC \
 MCAL/EXTI \
 MCAL/GPIO \

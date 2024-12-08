@@ -1,0 +1,7 @@
+[
+  { "command": "ENA", "nodeID": 128, "data": null },
+  { "command": "DIS", "nodeID": 129, "data": null },
+  { "command": "ACT", "nodeID": 128, "data": "ON" },
+  { "command": "STA", "nodeID": 129, "data": null },
+  { "command": "DUR", "nodeID": 128, "data": "5" }
+]

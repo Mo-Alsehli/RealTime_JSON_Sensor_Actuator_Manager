@@ -188,7 +188,7 @@ void MCAL_UART_Wait_TC (UART_TYPE_DEF* uartx){
  * Note 		- none
  */
 
-void MCAL_UART_ReceiveData (UART_TYPE_DEF* uartx, uint16_t* pRxBuffer, enum Polling_Mechanism pollingEn){
+void MCAL_UART_ReceiveData (UART_TYPE_DEF* uartx, uint8_t* pRxBuffer, enum Polling_Mechanism pollingEn){
 	if(pollingEn == enable){
 		while (!(uartx->SR & 1 << 5));
 	}
@@ -204,9 +204,9 @@ void MCAL_UART_ReceiveData (UART_TYPE_DEF* uartx, uint16_t* pRxBuffer, enum Poll
 		}
 	}else if (payLoad == UART_PayloadLength_8B){
 		if(parity == UART_Parity_NONE){
-			*((uint16_t*) pRxBuffer) = uartx->DR;
+			*((uint8_t*) pRxBuffer) = uartx->DR;
 		}else{
-			*((uint16_t*) pRxBuffer) = (uartx->DR & (uint8_t)0x7F);
+			*((uint8_t*) pRxBuffer) = (uartx->DR & (uint8_t)0x7F);
 		}
 	}
 }
@@ -315,6 +315,8 @@ void MCAL_UART_GPIO_SetPins	(UART_TYPE_DEF* uartx){
 		}
 	}
 }
+
+
 
 
 

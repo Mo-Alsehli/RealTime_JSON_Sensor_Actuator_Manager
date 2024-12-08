@@ -16,6 +16,8 @@ RM := rm -rf
 -include MCAL/GPIO/subdir.mk
 -include MCAL/EXTI/subdir.mk
 -include MCAL/ADC/subdir.mk
+-include Libs/cJson_Functions/subdir.mk
+-include Libs/cJson/subdir.mk
 -include HAL/Relay_5V_Actuator/subdir.mk
 -include HAL/LM35_Temp_Sensor/subdir.mk
 -include HAL/LDR_Light_Sensor/subdir.mk

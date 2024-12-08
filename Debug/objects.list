@@ -2,6 +2,8 @@
 "HAL/LDR_Light_Sensor/LDR_Light_Sensor.o"
 "HAL/LM35_Temp_Sensor/LM35_Temp_Sensor.o"
 "HAL/Relay_5V_Actuator/Relay_5V_Actuator.o"
+"Libs/cJson/cJson.o"
+"Libs/cJson_Functions/cJson_Functions.o"
 "MCAL/ADC/ADC.o"
 "MCAL/EXTI/EXTI_Driver.o"
 "MCAL/GPIO/GPIO_Driver.o"

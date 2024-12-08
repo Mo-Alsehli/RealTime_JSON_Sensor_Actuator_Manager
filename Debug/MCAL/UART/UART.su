@@ -4,6 +4,6 @@ UART.c:136:6:MCAL_UART_SendData	40	static
 UART.c:175:6:MCAL_UART_Wait_TC	16	static
 UART.c:191:6:MCAL_UART_ReceiveData	32	static
 UART.c:223:6:MCAL_UART_GPIO_SetPins	24	static
-UART.c:323:6:USART1_IRQHandler	8	static
-UART.c:327:6:USART2_IRQHandler	8	static
-UART.c:331:6:USART3_IRQHandler	8	static
+UART.c:325:6:USART1_IRQHandler	8	static
+UART.c:329:6:USART2_IRQHandler	8	static
+UART.c:333:6:USART3_IRQHandler	8	static

@@ -23,7 +23,8 @@ Src/main.o: ../Src/main.c \
  C:/Users/dell/STM32CubeIDE/workspace_1.4.0/SmartEGAT_Task/Middlewares/freeRTOS/include/semphr.h \
  C:/Users/dell/STM32CubeIDE/workspace_1.4.0/SmartEGAT_Task/Middlewares/freeRTOS/include/queue.h \
  C:/Users/dell/STM32CubeIDE/workspace_1.4.0/SmartEGAT_Task/Middlewares/freeRTOS/include/task.h \
- C:/Users/dell/STM32CubeIDE/workspace_1.4.0/SmartEGAT_Task/Middlewares/freeRTOS/include/queue.h
+ C:/Users/dell/STM32CubeIDE/workspace_1.4.0/SmartEGAT_Task/Middlewares/freeRTOS/include/queue.h \
+ C:/Users/dell/STM32CubeIDE/workspace_1.4.0/SmartEGAT_Task/Middlewares/freeRTOS/include/timers.h
 
 C:/Users/dell/STM32CubeIDE/workspace_1.4.0/SmartEGAT_Task/Libs/cJson/cJson.h:
 
@@ -74,3 +75,5 @@ C:/Users/dell/STM32CubeIDE/workspace_1.4.0/SmartEGAT_Task/Middlewares/freeRTOS/i
 C:/Users/dell/STM32CubeIDE/workspace_1.4.0/SmartEGAT_Task/Middlewares/freeRTOS/include/task.h:
 
 C:/Users/dell/STM32CubeIDE/workspace_1.4.0/SmartEGAT_Task/Middlewares/freeRTOS/include/queue.h:
+
+C:/Users/dell/STM32CubeIDE/workspace_1.4.0/SmartEGAT_Task/Middlewares/freeRTOS/include/timers.h:

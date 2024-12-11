@@ -29,11 +29,11 @@
 #include "Relay_5V_Actuator.h"
 #include "cJson_Functions.h"
 
-//#include "FreeRTOS_Tasks.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
 #include "queue.h"
+#include "timers.h"
 
 // ------------------------------------------------------------------
 // User Defined Macros
@@ -47,53 +47,18 @@
 // ------------------------------------------------------------------
 // Global Variables
 // ------------------------------------------------------------------
-const char* json_commands[] =
-{
-		"{\"command\":\"ENA\",\"nodeID\":\"0x81\",\"data\":null}",
-		"{\"command\":\"DIS\",\"nodeID\":\"0x80\",\"data\":null}",
-		"{\"command\":\"ACT\",\"nodeID\":\"0x50\",\"data\":\"ON\"}",
-		"{\"command\":\"STA\",\"nodeID\":\"0x81\",\"data\":null}",
-		"{\"command\":\"DUR\",\"nodeID\":\"0x50\",\"data\":\"5\"}"
-};
-
-
-//QueueHandle_t commandQueue;
-
 char volatile CMD = 0;
-int i = 0;
-int j = 0;
 
+float tempLastStatus = 0;
+float lightLastStatus = 0;
+uint16_t duration;
 
-
-// ------------------------------------------------------------------
-// Global functions
-// ------------------------------------------------------------------
-
-/*
-float temperature;
-void ADC_Callback(){
-	uint16_t adcValue = ADC1->DR;
-	float voltage = (adcValue * 5.0) / 4096.0;
-	temperature = (voltage - 5.0) * 100.0;
-}
- */
-
-
-
-
-void clockInit(){
-	RCC_GPIOA_CLk_EN();
-	RCC_GPIOB_CLk_EN();
-	RCC_AFIO_CLK_EN();
-}
+char buffer[50];
 
 QueueHandle_t currCommandQueue;
 QueueHandle_t commandsQueue;
 QueueHandle_t commandExecuteQueue;
 
-void UART1_RXe_Callback(void);
-
-TaskHandle_t parse;
 
 TaskHandle_t Parse_Command_Handle;
 TaskHandle_t Store_Command_Handle;
@@ -102,10 +67,44 @@ TaskHandle_t Command_Execute_Handle;
 SemaphoreHandle_t RX_TX_Semaphore;
 
 
+TimerHandle_t TempSensorStatusPeriodic_Timer;
+TimerHandle_t LightSensorStatusPeriodic_Timer;
+
+// ------------------------------------------------------------------
+// Global functions
+// ------------------------------------------------------------------
+
+
+void clockInit(){
+	RCC_GPIOA_CLk_EN();
+	RCC_GPIOB_CLk_EN();
+	RCC_AFIO_CLK_EN();
+}
+
+
+
 
 void Parse_Command_Handler(void *vparams);
 void Store_Command_Handler(void *vparams);
 void Command_Execute_Handler(void *vparams);
+
+
+void TempSensorStatusPeriodicTimer_Handler(TimerHandle_t xTimer){
+	tempLastStatus = HAL_LM35_Read();
+	sprintf(buffer, "Tempreture Status: %.2f\r\n", tempLastStatus);
+	for(int i = 0; i < strlen(buffer); i++)
+		UART_Send_SingelChar(UART2, buffer[i], enable);
+	memset(buffer, 0, 25);
+}
+void LightSensorStatusPeriodicTimer_Handler(TimerHandle_t xTimer){
+	lightLastStatus = HAL_LDR_Read_Intensity();
+	sprintf(buffer, "Intensity Last Status: %.2f %%\r\n", lightLastStatus);
+	for(int i = 0; i < strlen(buffer); i++)
+		UART_Send_SingelChar(UART2, buffer[i], enable);
+	memset(buffer, 0, 25);
+
+}
+
 
 // ------------------------------------------------------------------
 // Main Function
@@ -135,19 +134,7 @@ int main(void) {
 	MCAL_UART_Init(UART2, &uartCfg);
 	MCAL_UART_GPIO_SetPins(UART2);
 
-	// queue creation
-	//commandQueue = xQueueCreate(COMMAND_QUEUE_LENGTH, COMMAND_BUFFER_SIZE);
 
-	//task creation
-	//	if (xTaskCreate(CommandProcessing_Task, "Json Command Processing Task", 512, NULL, 3, &parse) != pdPASS) {
-	//			char *buffer = "Error: Create_CommandProcessing_Task creation failed!\n";
-	//			MCAL_UART_SendData(UART1, (uint8_t*)buffer, strlen(buffer), enable);
-	//		}
-	//
-	//	if (xTaskCreate(UART1_Recieve_JsonCommand, "UART RX JSON Command", 128, NULL, 1, NULL) != pdPASS) {
-	//			char *buffer = "Error: Create_UART_RX_Task creation failed!\n";
-	//			MCAL_UART_SendData(UART1, (uint8_t*)buffer, strlen(buffer), enable);
-	//		}
 	currCommandQueue = xQueueCreate(50, sizeof(char));
 	commandsQueue = xQueueCreate(5, MAX_CMD_LENGTH);
 	commandExecuteQueue = xQueueCreate(5, sizeof(COMMAND_TYPE));
@@ -155,22 +142,17 @@ int main(void) {
 
 	xTaskCreate(Store_Command_Handler, "Store Command", 256, NULL, 2, &Store_Command_Handle);
 	xTaskCreate(Parse_Command_Handler, "Parse Command", 128, NULL, 1, &Parse_Command_Handle);
-	xTaskCreate(Command_Execute_Handler, "Execute Command", 256, NULL, 1, &Command_Execute_Handle);
+	xTaskCreate(Command_Execute_Handler, "Execute Command", 512, NULL, 2, &Command_Execute_Handle);
+
+	TempSensorStatusPeriodic_Timer = xTimerCreate("Tempareture Status TIM", (1000 / portTICK_PERIOD_MS), pdTRUE, (void*)0, TempSensorStatusPeriodicTimer_Handler);
+	LightSensorStatusPeriodic_Timer = xTimerCreate("Light Status TIM", (1000 / portTICK_PERIOD_MS), pdTRUE, (void*)1, LightSensorStatusPeriodicTimer_Handler);
+
 	//RX_TX_Semaphore = xSemaphoreCreateBinary();
 
 	MCAL_UART_SendData(UART1, (uint8_t*)"here\r\n", 6, enable);
 	MCAL_UART_SendData(UART2, (uint8_t*)"here\r\n", 6, enable);
+
 	vTaskStartScheduler();
-
-
-	// Initialize LM35 with ADC1 ch0.
-	//HAL_LM35_Init();
-
-	// Initialize LDR with ADC1 ch1.
-	//HAL_LDR_Init();
-
-	// Initialize Relay Actuator.
-	//HAL_Relay_Init(GPIOA, GPIO_PIN_11);
 
 
 	while (1) {
@@ -178,18 +160,6 @@ int main(void) {
 	}
 }
 
-//void UART1_RX_Monitor_Handler(void *vparams){
-//	uint8_t ch = '$';
-//	while(1){
-//		MCAL_UART_ReceiveData(UART1, (uint8_t*)&ch, enable);
-//		if(ch != '$'){
-//			//xQueueSend(currCommandQueue, ch, portMAX_DELAY);
-//			xSemaphoreGive(RX_TX_Semaphore);
-//		}
-//		ch = '$';
-//		vTaskDelay(25);
-//	}
-//}
 
 void Store_Command_Handler(void *vparams){
 	uint8_t ch = 'E';
@@ -224,7 +194,7 @@ void Store_Command_Handler(void *vparams){
 					commandIndex = 0;
 				}
 			}else{
-				if(i < (MAX_CMD_LENGTH - 1)){
+				if(commandIndex < (MAX_CMD_LENGTH - 1)){
 					cmdBuffer[commandIndex++] = ch;
 				}else{
 					char *buffer = "\r\nError: Command too long!\r\n";
@@ -259,8 +229,7 @@ void Command_Execute_Handler(void *vparams){
 	COMMAND_TYPE command;
 	char buffer[50];
 	uint8_t relayLastStatus = 0;
-	float tempLastStatus = 0;
-	float lightLastStatus = 0;
+
 	while(1){
 		if(xQueueReceive(commandExecuteQueue, &command, (TickType_t) 5)){
 			if(strcmp(command.cmd, "ENA") == 0){
@@ -309,6 +278,28 @@ void Command_Execute_Handler(void *vparams){
 						UART_Send_SingelChar(UART2, buffer[i], enable);
 				}
 				memset(buffer, 0, 50);
+			}else if(strcmp(command.cmd, "DUR") == 0){
+				if(strcmp(command.nodeID, "0x80") == 0){
+					xTimerStart(TempSensorStatusPeriodic_Timer, portMAX_DELAY);
+					if(command.nodeID != 0){
+						sscanf(command.data, "%hd", &duration);
+						duration = duration*200;
+						xTimerChangePeriod(TempSensorStatusPeriodic_Timer, (duration/portTICK_PERIOD_MS), (TickType_t)20);
+					}
+				}else if(strcmp(command.nodeID, "0x81") == 0){
+					xTimerStart(LightSensorStatusPeriodic_Timer, portMAX_DELAY);
+					if(command.nodeID != 0){
+						sscanf(command.data, "%hd", &duration);
+						duration = duration*200;
+						xTimerChangePeriod(LightSensorStatusPeriodic_Timer, (duration/portTICK_PERIOD_MS), (TickType_t)20);
+					}
+				}
+			}else if(strcmp(command.cmd, "DIS") == 0){
+				if(strcmp(command.nodeID, "0x81") == 0){
+					xTimerStop(LightSensorStatusPeriodic_Timer, portMAX_DELAY);
+				}else if(strcmp(command.nodeID, "0x80") == 0){
+					xTimerStop(TempSensorStatusPeriodic_Timer, portMAX_DELAY);
+				}
 			}
 		}
 		vTaskDelay(15);
@@ -333,67 +324,4 @@ void USART1_IRQHandler() {
 
 
 
-//void UART1_Recieve_JsonCommand(void *pvParams){
-//	while(1){
-//		//i++;
-//		//Simple_UART_Send(UART1, 'N');
-//		MCAL_UART_ReceiveData(UART1, (uint8_t*)&ch, enable);
-//		MCAL_UART_SendData(UART1, (uint8_t*)&ch, 1, enable);
-//		//
-//		//		if(ch == '\b' || ch == 127){
-//		//			if(i > 0){
-//		//				i--;
-//		//				rxBuffer[i] = '\0';
-//		//			}
-//		//		}else if(ch == '}'){
-//		//			if(i < (MAX_CMD_LENGTH - 1)){
-//		//				rxBuffer[i++] = ch;
-//		//				rxBuffer[i] = '\0';
-//		//				if(!(Validate_JSON_Format(rxBuffer))){
-//		//					memset(rxBuffer, 0, MAX_CMD_LENGTH);
-//		//				}else{
-//		//					 //check if queue is full and add current command to it.
-//		//					if (xQueueSend(commandQueue, rxBuffer, portMAX_DELAY) != pdPASS) {
-//		//						char *buffer = "\r\nError: Commands Queue Is Full!!\r\n";
-//		//						MCAL_UART_SendData(UART1, (uint8_t*)buffer, strlen(buffer), enable);
-//		//					}
-//		//					memset(rxBuffer, 0, MAX_CMD_LENGTH); // Reset Command Buffer.
-//		//				}
-//		//				i = 0; // Reset Command Buffer Index.
-//		//			}else {
-//		//				i = 0;
-//		//				char *buffer = "\r\nError: Command too long!\r\n";
-//		//				MCAL_UART_SendData(UART1, (uint8_t*)buffer, strlen(buffer), enable);
-//		//				memset(rxBuffer, 0, MAX_CMD_LENGTH);
-//		//			}
-//		//		}else{
-//		//			if(i < (MAX_CMD_LENGTH - 1)){
-//		//				rxBuffer[i++] = ch;
-//		//			}else{
-//		//				i = 0;
-//		//				char *buffer = "\r\nError: Command too long!\r\n";
-//		//				MCAL_UART_SendData(UART1, (uint8_t*)buffer, strlen(buffer), enable);
-//		//				memset(rxBuffer, 0, MAX_CMD_LENGTH);
-//		//			}
-//		//		}
-//		//MCAL_UART_SendData(UART1, (uint8_t*)"M", 1, enable);
-//		vTaskDelay(pdMS_TO_TICKS(20));
-//	}
-//}
-
-
-void CommandProcessing_Task(void *pvParams){
-	while(1){
-		j++;
-		//MCAL_UART_SendData(UART1, (uint8_t*)"N", 1, enable);
-		//		if(xQueueReceive(commandQueue, commandBuffer, portMAX_DELAY) == pdPASS){
-		//			Parse_Command((const char*)commandBuffer, &command);
-		//			sprintf(buffer, "\r\nCommand: %s, nodeID: %s, data: %s\r\n", command.cmd, command.nodeID, command.data);
-		//			MCAL_UART_SendData(UART1, (uint8_t*)buffer, strlen(buffer), enable);
-		//			memset(buffer, 0, strlen(buffer));
-		//			memset(commandBuffer, 0, MAX_CMD_LENGTH);
-		//		}
-		vTaskDelay(pdMS_TO_TICKS(100));
-	}
-}
 

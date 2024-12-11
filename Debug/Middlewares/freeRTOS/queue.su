@@ -20,3 +20,4 @@ queue.c:2383:19:prvIsQueueEmpty	24	static
 queue.c:2404:12:xQueueIsQueueEmptyFromISR	24	static
 queue.c:2424:19:prvIsQueueFull	24	static
 queue.c:2445:12:xQueueIsQueueFullFromISR	24	static
+queue.c:2866:10:vQueueWaitForMessageRestricted	32	static

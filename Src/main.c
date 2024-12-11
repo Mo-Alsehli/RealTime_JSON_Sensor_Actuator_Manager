@@ -53,7 +53,7 @@ float tempLastStatus = 0;
 float lightLastStatus = 0;
 uint16_t duration;
 
-char buffer[50];
+char buffer[60];
 
 QueueHandle_t currCommandQueue;
 QueueHandle_t commandsQueue;
@@ -81,42 +81,47 @@ void clockInit(){
 	RCC_AFIO_CLK_EN();
 }
 
-
-
-
+// FreeRTOS OS Tasks.
 void Parse_Command_Handler(void *vparams);
 void Store_Command_Handler(void *vparams);
 void Command_Execute_Handler(void *vparams);
 
 
+// Periodic Timers Callback.
 void TempSensorStatusPeriodicTimer_Handler(TimerHandle_t xTimer){
 	tempLastStatus = HAL_LM35_Read();
-	sprintf(buffer, "Tempreture Status: %.2f\r\n", tempLastStatus);
+	sprintf(buffer, "{\"nodeType\":\"NS\", \"nodeID\": \"0x88\", \"data\": %.2f ^C}\r\n", tempLastStatus);
 	for(int i = 0; i < strlen(buffer); i++)
 		UART_Send_SingelChar(UART2, buffer[i], enable);
-	memset(buffer, 0, 25);
+	memset(buffer, 0, 60);
 }
+
 void LightSensorStatusPeriodicTimer_Handler(TimerHandle_t xTimer){
 	lightLastStatus = HAL_LDR_Read_Intensity();
-	sprintf(buffer, "Intensity Last Status: %.2f %%\r\n", lightLastStatus);
+	sprintf(buffer, "{\"nodeType\":\"NS\", \"nodeID\": \"0x88\", \"data\": %.2f ^C}\r\n", lightLastStatus);
 	for(int i = 0; i < strlen(buffer); i++)
 		UART_Send_SingelChar(UART2, buffer[i], enable);
-	memset(buffer, 0, 25);
+	memset(buffer, 0, 60);
 
 }
 
+
+void welcomeMessage(){
+	strcpy(buffer, "Welcome To SmartEGAT Task :) \r\nPlease Enter a Command: \r\n");
+	for(int i = 0; i < strlen(buffer); i++){
+		UART_Send_SingelChar(UART1, buffer[i], enable);
+		UART_Send_SingelChar(UART2, buffer[i], enable);
+	}
+	memset(buffer, 0, 60);
+}
 
 // ------------------------------------------------------------------
 // Main Function
 // ------------------------------------------------------------------
 
-
 int main(void) {
 	// Clock Initialization
 	clockInit();
-
-	//GPIOAInit();
-	//LCDInit();
 
 	// UART Configuration
 	UART_Config_t uartCfg ;
@@ -134,33 +139,42 @@ int main(void) {
 	MCAL_UART_Init(UART2, &uartCfg);
 	MCAL_UART_GPIO_SetPins(UART2);
 
-
+	// Queues Creation.
 	currCommandQueue = xQueueCreate(50, sizeof(char));
 	commandsQueue = xQueueCreate(5, MAX_CMD_LENGTH);
 	commandExecuteQueue = xQueueCreate(5, sizeof(COMMAND_TYPE));
 
-
+	// Tasks Creation.
 	xTaskCreate(Store_Command_Handler, "Store Command", 256, NULL, 2, &Store_Command_Handle);
 	xTaskCreate(Parse_Command_Handler, "Parse Command", 128, NULL, 1, &Parse_Command_Handle);
 	xTaskCreate(Command_Execute_Handler, "Execute Command", 512, NULL, 2, &Command_Execute_Handle);
 
+	// Timers Creation
 	TempSensorStatusPeriodic_Timer = xTimerCreate("Tempareture Status TIM", (1000 / portTICK_PERIOD_MS), pdTRUE, (void*)0, TempSensorStatusPeriodicTimer_Handler);
 	LightSensorStatusPeriodic_Timer = xTimerCreate("Light Status TIM", (1000 / portTICK_PERIOD_MS), pdTRUE, (void*)1, LightSensorStatusPeriodicTimer_Handler);
 
 	//RX_TX_Semaphore = xSemaphoreCreateBinary();
 
-	MCAL_UART_SendData(UART1, (uint8_t*)"here\r\n", 6, enable);
-	MCAL_UART_SendData(UART2, (uint8_t*)"here\r\n", 6, enable);
+	welcomeMessage();
 
+	// Starting FreeRTOS Schedular.
 	vTaskStartScheduler();
 
-
 	while (1) {
-
+		// shouldn't reach here.
 	}
 }
 
 
+
+
+/*
+ * This function is responsible for:
+ * 1. Recive Command From UART ISR.
+ * 2. Validate command (from deletions).
+ * 3. Validate Json Command is a valid json format.
+ * 4. Send Command Via Queue to be preccessed and executed.
+ */
 void Store_Command_Handler(void *vparams){
 	uint8_t ch = 'E';
 	uint8_t commandIndex = 0;
@@ -168,7 +182,7 @@ void Store_Command_Handler(void *vparams){
 
 	while(1){
 		if(xQueueReceive(currCommandQueue, &ch, (TickType_t)5) != pdFALSE){
-			//cmdBuffer[commandIndex++] = ch;
+			// Command Validation.
 			if(ch == '\b' || ch == 127){
 				if(commandIndex > 0){
 					commandIndex--;
@@ -210,6 +224,13 @@ void Store_Command_Handler(void *vparams){
 		vTaskDelay(20);
 	}}
 
+
+/*
+ * This function is responsible for:
+ * 1. Recieve command from Queue.
+ * 2. Decrypt the Json command and extract data.
+ * 3. Send command struct via Queue.
+ */
 void Parse_Command_Handler(void *vparams){
 	uint8_t cmd[50];
 	COMMAND_TYPE command;
@@ -225,9 +246,15 @@ void Parse_Command_Handler(void *vparams){
 	}
 }
 
+/*
+ * This function is responsible for:
+ * 1. Recieve command struct.
+ * 2. Validate Execute commands.
+ */
+
 void Command_Execute_Handler(void *vparams){
 	COMMAND_TYPE command;
-	char buffer[50];
+	char buffer[55];
 	uint8_t relayLastStatus = 0;
 
 	while(1){
@@ -235,10 +262,19 @@ void Command_Execute_Handler(void *vparams){
 			if(strcmp(command.cmd, "ENA") == 0){
 				if(strcmp(command.nodeID, "0x50") == 0){ // Node ID For Relay Actuator.
 					HAL_Relay_Init(GPIOA, GPIO_PIN_11);
+					strcpy(buffer, "{\"nodeType\":\"NA\", \"nodeID\": \"0x50\", \"data\":\"DONE\"}\r\n");
+					for(int i = 0; i < strlen(buffer); i++)
+						UART_Send_SingelChar(UART2, buffer[i], enable);
 				}else if(strcmp(command.nodeID, "0x80") == 0){ // Node ID For Tempareture Sensor.
 					HAL_LM35_Init();
+					strcpy(buffer, "{\"nodeType\":\"NS\", \"nodeID\": \"0x80\", \"data\":\"DONE\"}\r\n");
+					for(int i = 0; i < strlen(buffer); i++)
+						UART_Send_SingelChar(UART2, buffer[i], enable);
 				}else if(strcmp(command.nodeID, "0x81") == 0){ // Node ID For Lights Sensor.
 					HAL_LDR_Init();
+					strcpy(buffer, "{\"nodeType\":\"NS\", \"nodeID\": \"0x81\", \"data\":\"DONE\"}\r\n");
+					for(int i = 0; i < strlen(buffer); i++)
+						UART_Send_SingelChar(UART2, buffer[i], enable);
 				}else{
 					strcpy(buffer, "Unknown NodeID!!\r\n");
 					for(int i = 0; i < strlen(buffer); i++)
@@ -263,17 +299,17 @@ void Command_Execute_Handler(void *vparams){
 			}else if(strcmp(command.cmd, "STA") == 0){
 				if(strcmp(command.nodeID, "0x50") == 0){
 					relayLastStatus = MCAL_GPIO_ReadPin(GPIOA, GPIO_PIN_11);
-					sprintf(buffer, "Relay Status: %d\r\n", relayLastStatus);
+					sprintf(buffer, "{\"nodeType\":\"NA\", \"nodeID\": \"0x50\", \"data\": %d}\r\n", relayLastStatus);
 					for(int i = 0; i < strlen(buffer); i++)
 						UART_Send_SingelChar(UART2, buffer[i], enable);
 				}else if(strcmp(command.nodeID, "0x80") == 0){
 					tempLastStatus = HAL_LM35_Read();
-					sprintf(buffer, "Tempreture Status: %.2f\r\n", tempLastStatus);
+					sprintf(buffer, "{\"nodeType\":\"NS\", \"nodeID\": \"0x88\", \"data\": %.2f ^C}\r\n", tempLastStatus);
 					for(int i = 0; i < strlen(buffer); i++)
 						UART_Send_SingelChar(UART2, buffer[i], enable);
 				}else if(strcmp(command.nodeID, "0x81") == 0){
 					lightLastStatus = HAL_LDR_Read_Intensity();
-					sprintf(buffer, "Intensity Last Status: %.2f %%\r\n", lightLastStatus);
+					sprintf(buffer, "{\"nodeType\":\"NS\", \"nodeID\": \"0x81\", \"data\": %.2f}\r\n", lightLastStatus);
 					for(int i = 0; i < strlen(buffer); i++)
 						UART_Send_SingelChar(UART2, buffer[i], enable);
 				}
@@ -300,13 +336,20 @@ void Command_Execute_Handler(void *vparams){
 				}else if(strcmp(command.nodeID, "0x80") == 0){
 					xTimerStop(TempSensorStatusPeriodic_Timer, portMAX_DELAY);
 				}
+			}else {
+				strcpy(buffer, "ERROR: Invalid Command!!\r\n");
+				for(int i = 0; i < strlen(buffer); i++)
+					UART_Send_SingelChar(UART1, buffer[i], enable);
+				memset(buffer, 0, 50);
 			}
 		}
 		vTaskDelay(15);
 	}
 }
 
-
+/*
+ * ISR For UART RX.
+ */
 void USART1_IRQHandler() {
 	if ((UART1->SR & (1 << 5)) >> 5) {  // Check if RXNE interrupt is set
 		//MCAL_UART_ReceiveData(UART1, (uint8_t*)&CMD, disable);  // Read data
@@ -317,11 +360,5 @@ void USART1_IRQHandler() {
 		UART1->SR &= ~(1 << 5);
 	}
 }
-
-
-
-
-
-
 
 

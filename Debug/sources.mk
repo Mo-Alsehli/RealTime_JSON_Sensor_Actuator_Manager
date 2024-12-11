@@ -32,6 +32,10 @@ MCAL/GPIO \
 MCAL/RCC \
 MCAL/TIM \
 MCAL/UART \
+Middlewares/freeRTOS \
+Middlewares/freeRTOS/portable/GCC/ARM_CM3 \
+Middlewares/freeRTOS/portable/MemMang \
+Src/FreeRTOS_Tasks_Definitions \
 Src \
 Startup \
 

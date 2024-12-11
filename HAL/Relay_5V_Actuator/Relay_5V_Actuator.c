@@ -39,3 +39,12 @@ void HAL_Control_Relay_Temperature(){
 	}
 }
 
+void HAL_Relay_ACT(GPIO_TYPE_DEF* gpio, uint16_t GPIO_PIN_NUM, uint8_t data){
+	if(data == 1){
+		MCAL_GPIO_WritePin(gpio, GPIO_PIN_NUM, GPIO_PIN_HIGH);
+	}else{
+		MCAL_GPIO_WritePin(gpio, GPIO_PIN_NUM, GPIO_PIN_LOW);
+	}
+}
+
+

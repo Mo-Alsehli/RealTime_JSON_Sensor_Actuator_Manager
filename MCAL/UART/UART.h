@@ -138,7 +138,7 @@ void MCAL_UART_GPIO_SetPins		(UART_TYPE_DEF* uartx);
 void MCAL_UART_SendData			(UART_TYPE_DEF* uartx, uint8_t* pTxBuffer, uint8_t len, enum Polling_Mechanism pollingEn);
 void MCAL_UART_ReceiveData         (UART_TYPE_DEF* uartx, uint8_t* pRxBuffer, enum Polling_Mechanism pollingEn);
 void MCAL_UART_Wait_TC				(UART_TYPE_DEF* uartx);
-
+void UART_Send_SingelChar(UART_TYPE_DEF* uartx, uint8_t data, enum Polling_Mechanism polling);
 //void MCAL_UART_LIN_Init				(UART_TYPE_DEF* UARTx);
 //void MCAL_USART_DMA_Init 				(UART_TYPE_DEF* UARTx);
 //void MCAL_USART_Init  				(UART_TYPE_DEF* UARTx);

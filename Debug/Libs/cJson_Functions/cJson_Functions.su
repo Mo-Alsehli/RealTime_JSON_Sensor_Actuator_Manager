@@ -1,5 +1,5 @@
 cJson_Functions.c:9:6:parse_json_object	32	static
 cJson_Functions.c:28:6:Parse_Command	40	static
-cJson_Functions.c:80:5:Validate_JSON_Format	24	static
-cJson_Functions.c:93:6:parse_array_of_objects	136	static
-cJson_Functions.c:113:6:Load_Test_Cases	32	static
+cJson_Functions.c:62:5:Validate_JSON_Format	32	static
+cJson_Functions.c:77:6:parse_array_of_objects	136	static
+cJson_Functions.c:97:6:Load_Test_Cases	32	static

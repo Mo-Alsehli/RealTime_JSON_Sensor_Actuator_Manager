@@ -147,20 +147,27 @@ void MCAL_UART_SendData	(UART_TYPE_DEF* uartx, uint8_t* pTxBuffer, uint8_t len, 
 	if (payloadLength == UART_PayloadLength_9B) {
 		// Handle 9-bit data transmission (if supported)
 	} else if (payloadLength == UART_PayloadLength_8B) {
-		for (int i = 0; i < len; i++) {
+		for (int k = 0; k < len; k++) {
 			// Calculate parity bit if enabled
 			uint8_t data = *p8DataBits;
 			if (parity != UART_Parity_NONE) {
 				// Implement parity bit calculation logic here based on parity configuration
 			}
 			if (pollingEn == enable) {
-					while (!(uartx->SR & 1 << 7));
+				while (!(uartx->SR & 1 << 7));
 			}
 			uartx->DR = data;
 			p8DataBits++;
 		}
 	}
 
+}
+
+void UART_Send_SingelChar(UART_TYPE_DEF* uartx, uint8_t data, enum Polling_Mechanism polling) {
+	//uint8_t parity = uartx == UART1 ? UARTGlobalCfg[0]->Parity : uartx == UART2 ? UARTGlobalCfg[1]->Parity : UARTGlobalCfg[2]->Parity;
+    while (!(uartx->SR & (1 << 7)));  // Wait for TXE
+    uartx->DR = data;                // Write data
+    while (!(uartx->SR & (1 << 6))); // Wait for TC (Transmission Complete)
 }
 
 /**==================================================================
@@ -198,15 +205,15 @@ void MCAL_UART_ReceiveData (UART_TYPE_DEF* uartx, uint8_t* pRxBuffer, enum Polli
 	// Check if the word length is 9 Bit or 8 Bit.
 	if(payLoad == UART_PayloadLength_9B){
 		if(parity == UART_Parity_NONE){
-			*((uint16_t*) pRxBuffer) = uartx->DR;
+			*pRxBuffer = uartx->DR;
 		}else{
-			*((uint16_t*) pRxBuffer) = (uartx->DR & (uint8_t)0xFF);
+			*pRxBuffer = (uartx->DR & (uint8_t)0xFF);
 		}
 	}else if (payLoad == UART_PayloadLength_8B){
 		if(parity == UART_Parity_NONE){
-			*((uint8_t*) pRxBuffer) = uartx->DR;
+			*pRxBuffer = uartx->DR;
 		}else{
-			*((uint8_t*) pRxBuffer) = (uartx->DR & (uint8_t)0x7F);
+			*pRxBuffer = (uartx->DR & (uint8_t)0x7F);
 		}
 	}
 }
@@ -322,9 +329,9 @@ void MCAL_UART_GPIO_SetPins	(UART_TYPE_DEF* uartx){
 
 
 // ISR()
-void USART1_IRQHandler(){
-	UARTGlobalCfg[0]->P_IRQ_Callback();
-}
+//void USART1_IRQHandler(){
+//	UARTGlobalCfg[0]->P_IRQ_Callback();
+//}
 
 void USART2_IRQHandler(){
 	UARTGlobalCfg[1]->P_IRQ_Callback();

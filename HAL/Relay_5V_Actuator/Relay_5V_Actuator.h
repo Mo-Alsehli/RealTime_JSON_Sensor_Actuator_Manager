@@ -14,6 +14,7 @@
 
 
 void HAL_Relay_Init(GPIO_TYPE_DEF* gpio, uint16_t GPIO_PIN_NUM);
+void HAL_Relay_ACT(GPIO_TYPE_DEF* gpio, uint16_t GPIO_PIN_NUM, uint8_t data);
 void HAL_Control_Relay_Light();
 void HAL_Control_Relay_Temperature();
 void HAL_Relay_DeInit(GPIO_TYPE_DEF* gpio, uint16_t GPIO_PIN_NUM);

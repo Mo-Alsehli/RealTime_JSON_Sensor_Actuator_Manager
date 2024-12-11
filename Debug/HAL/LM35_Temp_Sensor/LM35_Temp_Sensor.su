@@ -1,4 +1,4 @@
 LM35_Temp_Sensor.c:9:6:HAL_LM35_Init	24	static
-LM35_Temp_Sensor.c:28:7:HAL_LM35_Read	32	static
-LM35_Temp_Sensor.c:38:6:HAL_LM35_UART_SendDAta	72	static
-LM35_Temp_Sensor.c:47:6:HAL_LM35_DeInit	4	static
+LM35_Temp_Sensor.c:27:7:HAL_LM35_Read	32	static
+LM35_Temp_Sensor.c:37:6:HAL_LM35_UART_SendDAta	72	static
+LM35_Temp_Sensor.c:46:6:HAL_LM35_DeInit	4	static

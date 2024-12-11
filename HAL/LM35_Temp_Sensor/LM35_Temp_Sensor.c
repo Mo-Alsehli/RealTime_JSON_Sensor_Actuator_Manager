@@ -21,7 +21,6 @@ void HAL_LM35_Init(){
 
 	// Perform a Dummy Read.
 	HAL_LM35_Read();
-	wait(50);
 }
 
 

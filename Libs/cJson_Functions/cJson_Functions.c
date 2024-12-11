@@ -48,40 +48,24 @@ void Parse_Command(const char *json_msg, COMMAND_TYPE* currCommand) {
     	}
     }else{
 		char *buffer = "\r\nError: DATA INVALID!\r\n";
-		MCAL_UART_SendData(UART1, (uint8_t*)buffer, strlen(buffer), enable);
+		//MCAL_UART_SendData(UART1, (uint8_t*)buffer, strlen(buffer), enable);
+		for(int i = 0; i < strlen(buffer); i++)
+			UART_Send_SingelChar(UART1, buffer[i], enable);
 		strcpy(currCommand->cmd, "");
 		strcpy(currCommand->nodeID, "");
 		strcpy(currCommand->data, "");
     }
 
     cJSON_Delete(root);
-
-//    if (command && nodeID) {
-//        if (strcmp(command->valuestring, "ENA") == 0) {
-//            Enable_Node(nodeID->valueint);
-//        } else if (strcmp(command->valuestring, "DIS") == 0) {
-//            Disable_Node(nodeID->valueint);
-//        } else if (strcmp(command->valuestring, "ACT") == 0) {
-//            if (data) {
-//                Act_On_Node(nodeID->valueint, data->valuestring);
-//            }
-//        } else if (strcmp(command->valuestring, "STA") == 0) {
-//            Get_Node_Status(nodeID->valueint);
-//        } else if (strcmp(command->valuestring, "DUR") == 0) {
-//            if (data) {
-//                Set_Node_Duration(nodeID->valueint, atoi(data->valuestring));
-//            }
-//        }
-//    }
-
-    // Free memory
 }
 
 int Validate_JSON_Format(const char *json_msg) {
     cJSON *root = cJSON_Parse(json_msg);
     if (!root) {
         char* buffer = "\r\nError: Invalid JSON format!\r\n";
-		MCAL_UART_SendData(UART1, (uint8_t*)buffer, strlen(buffer), enable);
+		//MCAL_UART_SendData(UART1, (uint8_t*)buffer, strlen(buffer), enable);
+        for(int i = 0; i < strlen(buffer); i++)
+        	UART_Send_SingelChar(UART1, buffer[i], enable);
         return 0;
     }
     cJSON_Delete(root);

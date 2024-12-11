@@ -53,14 +53,18 @@ void HAL_LDR_Init(){
 
 		// Perform a Dummy Read.
 		HAL_LDR_Read_Intensity();
-		wait(50);
 }
 
 
 float HAL_LDR_Read_Intensity(){
 	uint16_t adcValue = ADC_Read_SingleChannel(ADC1, LDR_ADC_CH);
 	// Calculate Intensity as a Percentage.
-	float intensity = Calculate_LightIntensityPercentage(adcValue);
+	float intensity;
+	if(adcValue != 0){
+		intensity = Calculate_LightIntensityPercentage(adcValue);
+	}else {
+		intensity = 0;
+	}
 
 	return intensity;
 }

@@ -1,5 +1,5 @@
 LDR_Light_Sensor.c:10:7:Calculate_LightIntensityPercentage	64	static
 LDR_Light_Sensor.c:41:6:HAL_LDR_Init	24	static
-LDR_Light_Sensor.c:60:7:HAL_LDR_Read_Intensity	16	static
-LDR_Light_Sensor.c:68:6:HAL_LDR_UART_SendData	72	static
-LDR_Light_Sensor.c:76:6:HAL_LDR_DeInit	4	static
+LDR_Light_Sensor.c:59:7:HAL_LDR_Read_Intensity	16	static
+LDR_Light_Sensor.c:72:6:HAL_LDR_UART_SendData	72	static
+LDR_Light_Sensor.c:80:6:HAL_LDR_DeInit	4	static

@@ -25,8 +25,8 @@ The system is built on FreeRTOS to ensure real-time task management and efficien
 ### Key Components
 1. **Sensors and Actuators**:
    - Temperature Sensor [LM35](https://www.amazon.eg/-/en/Electro-Hub-Temperature-Sensor-LM35/dp/B091DK861W) to monitor ambient temperature.
-   - Light Sensor (LDR) to measure light intensity.
-   - Relay Actuator for switching external devices.
+   - Light Sensor [LDR](https://www.amazon.eg/-/en/Photo-Resistor-Ldr-Light-Sensor-Module/dp/B091C78W45/ref=asc_df_B091C78W45/?tag=egoshpadde-21&linkCode=df0&hvadid=545087933230&hvpos=&hvnetw=g&hvrand=12115307415692333059&hvpone=&hvptwo=&hvqmt=&hvdev=c&hvdvcmdl=&hvlocint=&hvlocphy=9112471&hvtargid=pla-2458632598552&psc=1&mcid=ddea6a350d4b354b90db1f34ed82b923) to measure light intensity.
+   - [Relay](https://www.amazon.eg/-/en/Arduino-Relay-Controlling-Home-Devices/dp/B091J8NMMR/ref=asc_df_B091J8NMMR/?tag=egoshpadde-21&linkCode=df0&hvadid=544963489384&hvpos=&hvnetw=g&hvrand=15378659795966451248&hvpone=&hvptwo=&hvqmt=&hvdev=c&hvdvcmdl=&hvlocint=&hvlocphy=9112471&hvtargid=pla-1934966580388&psc=1&mcid=2c485f23b6fa318ab87e198e0f65dd40) Actuator for switching external devices.
 
 2. **Communication Interface**:
    - UART transmits and receives JSON messages between the STM32 microcontroller and the UART monitor.

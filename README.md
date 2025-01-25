@@ -1,7 +1,7 @@
-# SmartEGAT Task
+# Realtime Json Sensor Actuator Manager
 
 ## 📖 Project Overview
-The **SmartEGAT Task** is an embedded systems application developed for STM32 microcontrollers. 
+This project is an embedded systems application developed for STM32 microcontrollers. 
 It enables seamless communication with sensors and actuators using JSON commands via UART. 
 The system is built on FreeRTOS to ensure real-time task management and efficiency.
 
